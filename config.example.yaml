@@ -1,0 +1,36 @@
+server:
+  listen: ":8080"
+  admin_token: "changeme"
+  status_page_enabled: true
+
+database:
+  path: "data/watchdog.db"
+
+notifier:
+  base_url: "http://notifier:8080"
+  token: "${NOTIFIER_TOKEN}"
+
+watchdog:
+  heartbeat_interval: 300
+  cleanup_interval: 3600
+  probe_history_days: 30
+  event_history_days: 90
+
+targets:
+  - id: "quillgo-main"
+    name: "Quillgo 博客"
+    type: "http"
+    url: "https://blog.yourdomain.com/health"
+    interval_ms: 30000
+    timeout_ms: 5000
+    healthy_threshold: 3
+    unhealthy_threshold: 3
+
+  - id: "notifier-main"
+    name: "Notifier 推送平台"
+    type: "http"
+    url: "http://notifier:8080/health"
+    interval_ms: 30000
+    timeout_ms: 5000
+    healthy_threshold: 3
+    unhealthy_threshold: 3

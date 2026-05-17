@@ -1,0 +1,10 @@
+data/
+*.exe
+*.db
+*.db-shm
+*.db-wal
+config.yaml
+config.local.yaml
+coverage.out
+watchdog
+watchdog-linux

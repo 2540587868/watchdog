@@ -1,0 +1,38 @@
+server:
+  listen: ":8083"
+  admin_token: "wd_admin_Ch4ng3M3"
+  status_page_enabled: true
+
+database:
+  path: "/opt/watchdog/data/watchdog.db"
+
+notifier:
+  base_url: "http://127.0.0.1:8081"
+  token: "nt_djsEi_kqCiHTo8nzbgsLu0v7nrdB4-it"
+
+watchdog:
+  heartbeat_interval: 300
+  cleanup_interval: 3600
+  probe_history_days: 30
+  event_history_days: 90
+
+targets:
+  - id: "notifier-api"
+    name: "Notifier 推送平台"
+    type: "http"
+    url: "http://127.0.0.1:8081/health"
+    interval_ms: 30000
+    timeout_ms: 5000
+    healthy_threshold: 3
+    unhealthy_threshold: 3
+    alert_level: "critical"
+
+  - id: "shortlink-api"
+    name: "Shortlink 短链接"
+    type: "http"
+    url: "http://127.0.0.1:8082/health"
+    interval_ms: 30000
+    timeout_ms: 5000
+    healthy_threshold: 3
+    unhealthy_threshold: 3
+    alert_level: "critical"

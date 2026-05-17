@@ -1,0 +1,14 @@
+[Unit]
+Description=Watchdog Service Monitor
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/watchdog
+ExecStart=/opt/watchdog/watchdog -config /opt/watchdog/config.yaml
+Restart=always
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
