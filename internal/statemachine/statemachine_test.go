@@ -11,9 +11,9 @@ import (
 
 func newTestTarget() *target.Target {
 	return &target.Target{
-		ID:                 "test",
-		HealthyThreshold:   3,
-		UnhealthyThreshold: 3,
+		ID:                  "test",
+		HealthyThreshold:    3,
+		UnhealthyThreshold:  3,
 		DegradedThresholdMs: 2000,
 	}
 }

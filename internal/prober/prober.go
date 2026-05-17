@@ -3,6 +3,7 @@ package prober
 import (
 	"context"
 	"crypto/tls"
+	"io"
 	"net"
 	"net/http"
 	"time"
@@ -84,15 +85,14 @@ func (p *HTTPProber) Probe(ctx context.Context, t *target.Target) *ProbeResult {
 		result.Error = err.Error()
 		return result
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	result.StatusCode = resp.StatusCode
 	result.Success = resp.StatusCode == t.GetExpectStatus()
 
 	if t.ExpectBody != "" {
-		buf := make([]byte, 64*1024)
-		n, _ := resp.Body.Read(buf)
-		body := string(buf[:n])
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		body := string(bodyBytes)
 		if !contains(body, t.ExpectBody) {
 			result.Success = false
 			result.Error = "response body does not contain expected string"
@@ -128,7 +128,7 @@ func (p *TCPProber) Probe(ctx context.Context, t *target.Target) *ProbeResult {
 		result.Error = err.Error()
 		return result
 	}
-	conn.Close()
+	_ = conn.Close()
 	result.Success = true
 	return result
 }

@@ -42,7 +42,7 @@ func main() {
 
 	cfg := cfgMgr.Get()
 
-	if err := os.MkdirAll("data", 0755); err != nil {
+	if err = os.MkdirAll("data", 0755); err != nil {
 		slog.Error("failed to create data directory", "error", err)
 		os.Exit(1)
 	}

@@ -11,18 +11,18 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig   `yaml:"server"`
-	Database DatabaseConfig `yaml:"database"`
-	Notifier NotifierConfig `yaml:"notifier"`
-	Watchdog WatchdogConfig `yaml:"watchdog"`
+	Server   ServerConfig    `yaml:"server"`
+	Database DatabaseConfig  `yaml:"database"`
+	Notifier NotifierConfig  `yaml:"notifier"`
+	Watchdog WatchdogConfig  `yaml:"watchdog"`
 	Targets  []target.Target `yaml:"targets"`
 }
 
 type ServerConfig struct {
-	Listen             string `yaml:"listen"`
-	AdminToken         string `yaml:"admin_token"`
-	StatusPageEnabled  bool   `yaml:"status_page_enabled"`
-	DebugPort          string `yaml:"debug_port"`
+	Listen            string `yaml:"listen"`
+	AdminToken        string `yaml:"admin_token"`
+	StatusPageEnabled bool   `yaml:"status_page_enabled"`
+	DebugPort         string `yaml:"debug_port"`
 }
 
 type DatabaseConfig struct {
@@ -35,10 +35,10 @@ type NotifierConfig struct {
 }
 
 type WatchdogConfig struct {
-	HeartbeatInterval   int `yaml:"heartbeat_interval"`
-	CleanupInterval     int `yaml:"cleanup_interval"`
-	ProbeHistoryDays    int `yaml:"probe_history_days"`
-	EventHistoryDays    int `yaml:"event_history_days"`
+	HeartbeatInterval    int `yaml:"heartbeat_interval"`
+	CleanupInterval      int `yaml:"cleanup_interval"`
+	ProbeHistoryDays     int `yaml:"probe_history_days"`
+	EventHistoryDays     int `yaml:"event_history_days"`
 	TLSExpiryWarningDays int `yaml:"tls_expiry_warning_days"`
 }
 
@@ -104,7 +104,11 @@ func (m *Manager) loadFile(cfg *Config) error {
 }
 
 func (m *Manager) Get() *Config {
-	return m.current.Load().(*Config)
+	cfg, ok := m.current.Load().(*Config)
+	if !ok {
+		return Default()
+	}
+	return cfg
 }
 
 func (m *Manager) Reload() error {

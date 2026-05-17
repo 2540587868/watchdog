@@ -1,12 +1,7 @@
 package api
 
 import (
-	"crypto/rand"
-	"crypto/sha256"
-	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -86,8 +81,8 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	if len(states) > 0 && unhealthy == len(states) {
 		status = "unhealthy"
 		details["scheduler"] = map[string]any{
-			"status":   "all_unhealthy",
-			"targets":  len(states),
+			"status":  "all_unhealthy",
+			"targets": len(states),
 		}
 	} else {
 		details["scheduler"] = map[string]any{
@@ -97,9 +92,10 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	code := http.StatusOK
-	if status == "unhealthy" {
+	switch status {
+	case "unhealthy":
 		code = http.StatusServiceUnavailable
-	} else if status == "degraded" {
+	case "degraded":
 		code = http.StatusServiceUnavailable
 	}
 
@@ -224,11 +220,11 @@ func (s *Server) handleTargetByID(w http.ResponseWriter, r *http.Request) {
 		p50, p95, p99, _ := s.scheduler.GetTargetLatency(id)
 
 		writeJSON(w, http.StatusOK, map[string]any{
-			"target":       t,
-			"state":        state.String(),
-			"latency_p50":  p50.String(),
-			"latency_p95":  p95.String(),
-			"latency_p99":  p99.String(),
+			"target":      t,
+			"state":       state.String(),
+			"latency_p50": p50.String(),
+			"latency_p95": p95.String(),
+			"latency_p99": p99.String(),
 		})
 
 	case http.MethodPut:
@@ -379,10 +375,10 @@ func (s *Server) handleLatency(w http.ResponseWriter, r *http.Request, id string
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"target_id":   id,
-		"p50_ms":      p50.Milliseconds(),
-		"p95_ms":      p95.Milliseconds(),
-		"p99_ms":      p99.Milliseconds(),
+		"target_id": id,
+		"p50_ms":    p50.Milliseconds(),
+		"p95_ms":    p95.Milliseconds(),
+		"p99_ms":    p99.Milliseconds(),
 	})
 }
 
@@ -467,7 +463,7 @@ func (s *Server) handlePublicStatus(w http.ResponseWriter, r *http.Request) {
 			service["uptime_30d"] = uptime
 		}
 		if state == "unhealthy" {
-			service["message"] = fmt.Sprintf("Service Unhealthy")
+			service["message"] = "Service Unhealthy"
 		}
 		services = append(services, service)
 	}
@@ -540,21 +536,4 @@ func ApplyMiddleware(handler http.Handler, cfg *config.Manager) http.Handler {
 	h = loggingMiddleware(h)
 	h = authMiddleware(h, cfg)
 	return h
-}
-
-func generateID() string {
-	b := make([]byte, 16)
-	rand.Read(b)
-	return hex.EncodeToString(b)
-}
-
-func generateToken() string {
-	b := make([]byte, 24)
-	rand.Read(b)
-	return "wd_" + base64.RawURLEncoding.EncodeToString(b)
-}
-
-func hashToken(token string) string {
-	h := sha256.Sum256([]byte(token))
-	return hex.EncodeToString(h[:])
 }

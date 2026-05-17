@@ -14,11 +14,11 @@ import (
 )
 
 type Scheduler struct {
-	mu           sync.RWMutex
-	targets      map[string]*scheduledTarget
-	probers      map[target.ProbeType]prober.Prober
-	store        *store.Store
-	onChange     func(event statemachine.StateChangeEvent)
+	mu            sync.RWMutex
+	targets       map[string]*scheduledTarget
+	probers       map[target.ProbeType]prober.Prober
+	store         *store.Store
+	onChange      func(event statemachine.StateChangeEvent)
 	onProbeResult func(targetID string, result *prober.ProbeResult)
 
 	register   chan *target.Target

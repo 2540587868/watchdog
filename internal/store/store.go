@@ -101,13 +101,19 @@ type TargetRecord struct {
 }
 
 func (s *Store) InsertTarget(t *target.Target) error {
-	headersJSON, _ := json.Marshal(t.Headers)
-	labelsJSON, _ := json.Marshal(t.Labels)
+	headersJSON, err := json.Marshal(t.Headers)
+	if err != nil {
+		return fmt.Errorf("marshal headers: %w", err)
+	}
+	labelsJSON, err := json.Marshal(t.Labels)
+	if err != nil {
+		return fmt.Errorf("marshal labels: %w", err)
+	}
 	var silencedUntil any
 	if t.SilencedUntil != nil {
 		silencedUntil = t.SilencedUntil.Format(time.RFC3339)
 	}
-	_, err := s.db.Exec(
+	_, err = s.db.Exec(
 		`INSERT INTO targets (id, name, type, url, interval_ms, timeout_ms, method, headers,
 		 expect_status, expect_body, tls_skip_verify, healthy_threshold, unhealthy_threshold,
 		 degraded_threshold_ms, alert_level, labels, silenced_until)
@@ -141,7 +147,7 @@ func (s *Store) ListTargets() ([]*target.Target, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var targets []*target.Target
 	for rows.Next() {
@@ -160,15 +166,21 @@ func (s *Store) DeleteTarget(id string) error {
 }
 
 func (s *Store) UpdateTarget(t *target.Target) error {
-	headersJSON, _ := json.Marshal(t.Headers)
-	labelsJSON, _ := json.Marshal(t.Labels)
+	headersJSON, err := json.Marshal(t.Headers)
+	if err != nil {
+		return fmt.Errorf("marshal headers: %w", err)
+	}
+	labelsJSON, err := json.Marshal(t.Labels)
+	if err != nil {
+		return fmt.Errorf("marshal labels: %w", err)
+	}
 
 	var silencedUntil any
 	if t.SilencedUntil != nil {
 		silencedUntil = t.SilencedUntil.Format(time.RFC3339)
 	}
 
-	_, err := s.db.Exec(
+	_, err = s.db.Exec(
 		`UPDATE targets SET name=?, type=?, url=?, interval_ms=?, timeout_ms=?, method=?,
 		 headers=?, expect_status=?, expect_body=?, tls_skip_verify=?,
 		 healthy_threshold=?, unhealthy_threshold=?, degraded_threshold_ms=?,
@@ -228,7 +240,7 @@ func (s *Store) ListProbeHistory(targetID string, limit int) ([]*ProbeHistoryRec
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var records []*ProbeHistoryRecord
 	for rows.Next() {
@@ -240,7 +252,10 @@ func (s *Store) ListProbeHistory(targetID string, limit int) ([]*ProbeHistoryRec
 			return nil, err
 		}
 		r.Success = success == 1
-		r.Timestamp, _ = time.Parse(time.RFC3339, ts)
+		r.Timestamp, err = parseTime(ts)
+		if err != nil {
+			return nil, fmt.Errorf("parse probe timestamp: %w", err)
+		}
 		records = append(records, &r)
 	}
 	return records, rows.Err()
@@ -277,7 +292,7 @@ func (s *Store) ListEvents(targetID string, limit int) ([]*EventRecord, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var events []*EventRecord
 	for rows.Next() {
@@ -287,7 +302,10 @@ func (s *Store) ListEvents(targetID string, limit int) ([]*EventRecord, error) {
 		if err != nil {
 			return nil, err
 		}
-		e.Timestamp, _ = time.Parse(time.RFC3339, ts)
+		e.Timestamp, err = parseTime(ts)
+		if err != nil {
+			return nil, fmt.Errorf("parse event timestamp: %w", err)
+		}
 		e.FromState = target.ParseState(fromState)
 		e.ToState = target.ParseState(toState)
 		events = append(events, &e)
@@ -297,16 +315,20 @@ func (s *Store) ListEvents(targetID string, limit int) ([]*EventRecord, error) {
 
 func (s *Store) GetTargetStats(targetID string) (map[string]any, error) {
 	var total, success int64
-	s.db.QueryRow(
+	if err := s.db.QueryRow(
 		`SELECT COUNT(*), COALESCE(SUM(CASE WHEN success=1 THEN 1 ELSE 0 END), 0) FROM probe_history WHERE target_id = ?`,
 		targetID,
-	).Scan(&total, &success)
+	).Scan(&total, &success); err != nil {
+		return nil, err
+	}
 
 	var avgLatency float64
-	s.db.QueryRow(
+	if err := s.db.QueryRow(
 		`SELECT COALESCE(AVG(latency_ms), 0) FROM probe_history WHERE target_id = ? AND success = 1`,
 		targetID,
-	).Scan(&avgLatency)
+	).Scan(&avgLatency); err != nil {
+		return nil, err
+	}
 
 	uptime := 0.0
 	if total > 0 {
@@ -378,13 +400,23 @@ func (s *Store) scanTargetFromScanner(sc scanner) (*target.Target, error) {
 	if err != nil {
 		return nil, err
 	}
-	json.Unmarshal([]byte(headersJSON), &t.Headers)
-	json.Unmarshal([]byte(labelsJSON), &t.Labels)
+	if err = json.Unmarshal([]byte(headersJSON), &t.Headers); err != nil {
+		return nil, fmt.Errorf("unmarshal headers: %w", err)
+	}
+	if err = json.Unmarshal([]byte(labelsJSON), &t.Labels); err != nil {
+		return nil, fmt.Errorf("unmarshal labels: %w", err)
+	}
 	t.TLSSkipVerify = tlsSkip == 1
-	t.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
-	t.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
+	t.CreatedAt, err = parseTime(createdAt)
+	if err != nil {
+		return nil, fmt.Errorf("parse created_at: %w", err)
+	}
+	t.UpdatedAt, err = parseTime(updatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("parse updated_at: %w", err)
+	}
 	if silencedUntil.Valid {
-		st, err := time.Parse(time.RFC3339, silencedUntil.String)
+		st, err := parseTime(silencedUntil.String)
 		if err == nil {
 			t.SilencedUntil = &st
 		}
@@ -397,4 +429,12 @@ func boolToInt(b bool) int {
 		return 1
 	}
 	return 0
+}
+
+func parseTime(s string) (time.Time, error) {
+	t, err := time.Parse(time.RFC3339, s)
+	if err == nil {
+		return t, nil
+	}
+	return time.Parse("2006-01-02 15:04:05", s)
 }

@@ -12,7 +12,7 @@ const (
 type TargetState int
 
 const (
-	StateUnknown   TargetState = iota
+	StateUnknown TargetState = iota
 	StateHealthy
 	StateDegraded
 	StateUnhealthy
@@ -53,26 +53,26 @@ const (
 )
 
 type Target struct {
-	ID       string     `json:"id" yaml:"id"`
-	Name     string     `json:"name" yaml:"name"`
-	Type     ProbeType  `json:"type" yaml:"type"`
-	URL      string     `json:"url" yaml:"url"`
-	Interval int        `json:"interval_ms" yaml:"interval_ms"`
-	Timeout  int        `json:"timeout_ms" yaml:"timeout_ms"`
+	ID       string    `json:"id" yaml:"id"`
+	Name     string    `json:"name" yaml:"name"`
+	Type     ProbeType `json:"type" yaml:"type"`
+	URL      string    `json:"url" yaml:"url"`
+	Interval int       `json:"interval_ms" yaml:"interval_ms"`
+	Timeout  int       `json:"timeout_ms" yaml:"timeout_ms"`
 
-	Method         string            `json:"method,omitempty" yaml:"method,omitempty"`
-	Headers        map[string]string `json:"headers,omitempty" yaml:"headers,omitempty"`
-	ExpectStatus   int               `json:"expect_status,omitempty" yaml:"expect_status,omitempty"`
-	ExpectBody     string            `json:"expect_body,omitempty" yaml:"expect_body,omitempty"`
-	TLSSkipVerify  bool              `json:"tls_skip_verify,omitempty" yaml:"tls_skip_verify,omitempty"`
+	Method        string            `json:"method,omitempty" yaml:"method,omitempty"`
+	Headers       map[string]string `json:"headers,omitempty" yaml:"headers,omitempty"`
+	ExpectStatus  int               `json:"expect_status,omitempty" yaml:"expect_status,omitempty"`
+	ExpectBody    string            `json:"expect_body,omitempty" yaml:"expect_body,omitempty"`
+	TLSSkipVerify bool              `json:"tls_skip_verify,omitempty" yaml:"tls_skip_verify,omitempty"`
 
-	HealthyThreshold   int        `json:"healthy_threshold,omitempty" yaml:"healthy_threshold,omitempty"`
-	UnhealthyThreshold int        `json:"unhealthy_threshold,omitempty" yaml:"unhealthy_threshold,omitempty"`
-	DegradedThresholdMs int       `json:"degraded_threshold_ms,omitempty" yaml:"degraded_threshold_ms,omitempty"`
-	AlertLevel         AlertLevel `json:"alert_level,omitempty" yaml:"alert_level,omitempty"`
+	HealthyThreshold    int        `json:"healthy_threshold,omitempty" yaml:"healthy_threshold,omitempty"`
+	UnhealthyThreshold  int        `json:"unhealthy_threshold,omitempty" yaml:"unhealthy_threshold,omitempty"`
+	DegradedThresholdMs int        `json:"degraded_threshold_ms,omitempty" yaml:"degraded_threshold_ms,omitempty"`
+	AlertLevel          AlertLevel `json:"alert_level,omitempty" yaml:"alert_level,omitempty"`
 
-	SilencedUntil *time.Time         `json:"silenced_until,omitempty" yaml:"silenced_until,omitempty"`
-	Labels        map[string]string  `json:"labels,omitempty" yaml:"labels,omitempty"`
+	SilencedUntil *time.Time        `json:"silenced_until,omitempty" yaml:"silenced_until,omitempty"`
+	Labels        map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
 
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	UpdatedAt time.Time `json:"updated_at,omitempty"`

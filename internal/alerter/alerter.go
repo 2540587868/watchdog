@@ -15,13 +15,13 @@ import (
 )
 
 type Alerter struct {
-	client            *NotifierClient
-	rateLimiter       *AlertRateLimiter
-	aggregator        *AlertAggregator
-	store             *store.Store
-	cooldowns         map[string]time.Time
-	tlsWarningDays    int
-	mu                sync.Mutex
+	client         *NotifierClient
+	rateLimiter    *AlertRateLimiter
+	aggregator     *AlertAggregator
+	store          *store.Store
+	cooldowns      map[string]time.Time
+	tlsWarningDays int
+	mu             sync.Mutex
 }
 
 func New(client *NotifierClient, st *store.Store, tlsWarningDays int) *Alerter {
@@ -62,9 +62,10 @@ func (a *Alerter) OnStateChange(event statemachine.StateChangeEvent) {
 	}
 
 	level := AlertLevelWarning
-	if event.To == target.StateUnhealthy {
+	switch event.To {
+	case target.StateUnhealthy:
 		level = AlertLevelCritical
-	} else if event.To == target.StateHealthy {
+	case target.StateHealthy:
 		level = AlertLevelInfo
 	}
 

@@ -2,7 +2,6 @@ package prober
 
 import (
 	"context"
-	"crypto/tls"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -15,7 +14,7 @@ import (
 func TestHTTPProber_Success(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("hello world"))
+		_, _ = w.Write([]byte("hello world"))
 	}))
 	defer srv.Close()
 
@@ -70,7 +69,7 @@ func TestHTTPProber_WrongStatus(t *testing.T) {
 func TestHTTPProber_ExpectBody(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("hello world"))
+		_, _ = w.Write([]byte("hello world"))
 	}))
 	defer srv.Close()
 
@@ -93,7 +92,7 @@ func TestHTTPProber_ExpectBody(t *testing.T) {
 func TestHTTPProber_ExpectBodyFail(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("goodbye"))
+		_, _ = w.Write([]byte("goodbye"))
 	}))
 	defer srv.Close()
 
@@ -171,10 +170,10 @@ func TestHTTPProber_Headers(t *testing.T) {
 func TestHTTPProber_InvalidURL(t *testing.T) {
 	prober := NewHTTPProber()
 	tgt := &target.Target{
-		ID:       "test-invalid",
-		Type:     target.ProbeHTTP,
-		URL:      "http://[::1]:namedport",
-		Timeout:  5000,
+		ID:      "test-invalid",
+		Type:    target.ProbeHTTP,
+		URL:     "http://[::1]:namedport",
+		Timeout: 5000,
 	}
 
 	result := prober.Probe(context.Background(), tgt)
@@ -186,7 +185,7 @@ func TestHTTPProber_InvalidURL(t *testing.T) {
 	}
 }
 
-func TestHTTPProber_ContextCancelled(t *testing.T) {
+func TestHTTPProber_ContextCanceled(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(2 * time.Second)
 		w.WriteHeader(http.StatusOK)
@@ -206,7 +205,7 @@ func TestHTTPProber_ContextCancelled(t *testing.T) {
 
 	result := prober.Probe(ctx, tgt)
 	if result.Success {
-		t.Error("Success = true for cancelled context, want false")
+		t.Error("Success = true for canceled context, want false")
 	}
 }
 
@@ -218,12 +217,12 @@ func TestHTTPProber_TLSSkipVerify(t *testing.T) {
 
 	prober := NewHTTPProber()
 	tgt := &target.Target{
-		ID:             "test-tls-skip",
-		Type:           target.ProbeHTTP,
-		URL:            srv.URL,
-		ExpectStatus:   200,
-		TLSSkipVerify:  true,
-		Timeout:        5000,
+		ID:            "test-tls-skip",
+		Type:          target.ProbeHTTP,
+		URL:           srv.URL,
+		ExpectStatus:  200,
+		TLSSkipVerify: true,
+		Timeout:       5000,
 	}
 
 	result := prober.Probe(context.Background(), tgt)
@@ -240,12 +239,12 @@ func TestHTTPProber_TLSExpiry(t *testing.T) {
 
 	prober := NewHTTPProber()
 	tgt := &target.Target{
-		ID:             "test-tls-expiry",
-		Type:           target.ProbeHTTP,
-		URL:            srv.URL,
-		ExpectStatus:   200,
-		TLSSkipVerify:  true,
-		Timeout:        5000,
+		ID:            "test-tls-expiry",
+		Type:          target.ProbeHTTP,
+		URL:           srv.URL,
+		ExpectStatus:  200,
+		TLSSkipVerify: true,
+		Timeout:       5000,
 	}
 
 	result := prober.Probe(context.Background(), tgt)
@@ -259,7 +258,7 @@ func TestTCPProber_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to listen: %v", err)
 	}
-	defer ln.Close()
+	defer func() { _ = ln.Close() }()
 
 	prober := NewTCPProber()
 	tgt := &target.Target{
@@ -284,7 +283,7 @@ func TestTCPProber_ConnectionRefused(t *testing.T) {
 		t.Fatalf("failed to listen: %v", err)
 	}
 	addr := ln.Addr().String()
-	ln.Close()
+	_ = ln.Close()
 
 	prober := NewTCPProber()
 	tgt := &target.Target{
@@ -303,7 +302,7 @@ func TestTCPProber_ConnectionRefused(t *testing.T) {
 	}
 }
 
-func TestTCPProber_ContextCancelled(t *testing.T) {
+func TestTCPProber_ContextCanceled(t *testing.T) {
 	prober := NewTCPProber()
 	tgt := &target.Target{
 		ID:      "test-tcp-cancel",
@@ -317,7 +316,7 @@ func TestTCPProber_ContextCancelled(t *testing.T) {
 
 	result := prober.Probe(ctx, tgt)
 	if result.Success {
-		t.Error("Success = true for cancelled context, want false")
+		t.Error("Success = true for canceled context, want false")
 	}
 }
 
@@ -370,20 +369,13 @@ func TestHTTPProber_SecureClientFailsSelfSigned(t *testing.T) {
 
 	prober := NewHTTPProber()
 	tgt := &target.Target{
-		ID:           "test-secure-fail",
-		Type:         target.ProbeHTTP,
-		URL:          srv.URL,
-		ExpectStatus: 200,
+		ID:            "test-secure-fail",
+		Type:          target.ProbeHTTP,
+		URL:           srv.URL,
+		ExpectStatus:  200,
 		TLSSkipVerify: false,
 		Timeout:       5000,
 	}
-
-	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: false,
-		},
-	}
-	_ = transport
 
 	result := prober.Probe(context.Background(), tgt)
 	if result.Success {

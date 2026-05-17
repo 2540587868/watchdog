@@ -77,7 +77,7 @@ func TestOnStateChange_UnhealthyAlert(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
 		mu.Lock()
-		json.Unmarshal(body, &receivedBody)
+		_ = json.Unmarshal(body, &receivedBody)
 		mu.Unlock()
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -124,7 +124,7 @@ func TestOnStateChange_HealthyAlert(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
 		mu.Lock()
-		json.Unmarshal(body, &receivedBody)
+		_ = json.Unmarshal(body, &receivedBody)
 		mu.Unlock()
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -320,7 +320,7 @@ func TestOnProbeResult_TLSExpiryWarning(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
 		mu.Lock()
-		json.Unmarshal(body, &receivedBody)
+		_ = json.Unmarshal(body, &receivedBody)
 		mu.Unlock()
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -367,7 +367,7 @@ func TestOnProbeResult_TLSExpiryCritical(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
 		mu.Lock()
-		json.Unmarshal(body, &receivedBody)
+		_ = json.Unmarshal(body, &receivedBody)
 		mu.Unlock()
 		w.WriteHeader(http.StatusOK)
 	}))
